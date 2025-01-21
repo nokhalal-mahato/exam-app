@@ -1,10 +1,13 @@
-import { app, shell, BrowserWindow, ipcMain, Menu, globalShortcut, protocol } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Menu, globalShortcut } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const { autoUpdater } = require('electron-updater')
 
+autoUpdater.autoDownload = false
+
 app.disableHardwareAcceleration()
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -12,11 +15,11 @@ function createWindow(): void {
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    // kiosk: true, // Prevent users from exiting fullscreen mode
+    kiosk: true, // Prevent users from exiting fullscreen mode
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       nodeIntegration: true,
-      // preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.js'),
       sandbox: false
     }
   })
@@ -55,14 +58,12 @@ function createWindow(): void {
     })
   })
 
-  autoUpdater.checkForUpdatesAndNotify()
-
-  autoUpdater.on('update-available', () => {
-    mainWindow.webContents.send('update_available')
+  autoUpdater.on('download-progress', (progress) => {
+    mainWindow.webContents.send('download-progress', progress)
   })
 
   autoUpdater.on('update-downloaded', () => {
-    mainWindow.webContents.send('update_downloaded')
+    mainWindow.webContents.send('update-downloaded')
   })
 
   mainWindow.webContents.closeDevTools()
@@ -75,9 +76,7 @@ function createWindow(): void {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL('https://learning-beta.earlywave.in/') // Replace with your desired URL
-
-    // mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
@@ -89,11 +88,12 @@ Menu.setApplicationMenu(null)
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  protocol.registerFileProtocol('exam-app', (request) => {
-    const url = request.url.replace('myapp://', '')
-    // Handle the URL or open specific windows based on the URL
-    console.log('Received URL:', url)
-  })
+  // autoUpdater.checkForUpdatesAndNotify()
+  // protocol.registerFileProtocol('exam-app', (request) => {
+  //   const url = request.url.replace('myapp://', '')
+  //   // Handle the URL or open specific windows based on the URL
+  //   console.log('Received URL:', url)
+  // })
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -106,6 +106,39 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+
+  ipcMain.handle('check-for-updates', async () => {
+    try {
+      const result = await autoUpdater.checkForUpdates()
+      return {
+        updateAvailable: true,
+        version: result.updateInfo.version
+      }
+    } catch (error) {
+      console.error('Error checking for updates:', error)
+      return {
+        updateAvailable: false,
+        error: error
+      }
+    }
+  })
+
+  ipcMain.handle('start-download', async () => {
+    try {
+      await autoUpdater.downloadUpdate()
+      return { success: true }
+    } catch (error) {
+      console.error('Error downloading update:', error)
+      return {
+        success: false,
+        error: error
+      }
+    }
+  })
+
+  ipcMain.handle('install-update', () => {
+    autoUpdater.quitAndInstall()
+  })
 
   createWindow()
 

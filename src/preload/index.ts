@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer, IpcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
@@ -20,3 +20,17 @@ if (process.contextIsolated) {
   // @ts-ignore (define in dts)
   window.api = api
 }
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  startDownload: () => ipcRenderer.invoke('start-download'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  onDownloadProgress: (callback) => {
+    ipcRenderer.on('download-progress', (event, progress) => callback(progress, event))
+    return (): IpcRenderer => ipcRenderer.removeListener('download-progress', callback)
+  },
+  onUpdateDownloaded: (callback) => {
+    ipcRenderer.on('update-downloaded', callback)
+    return (): IpcRenderer => ipcRenderer.removeListener('update-downloaded', callback)
+  }
+})
