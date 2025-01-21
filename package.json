@@ -51,6 +51,7 @@
     "appId": "com.exam-app.id",
     "productName": "ExamApp",
     "files": [
+      "out/**/*",
       "build/**/*",
       "node_modules/**/*",
       "main.js",
@@ -73,5 +74,10 @@
     "linux": {
       "target": "AppImage"
     }
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "nokhalal-mahato",
+    "repo": "exam-app"
   }
 }

@@ -89,7 +89,7 @@ Menu.setApplicationMenu(null)
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  protocol.registerFileProtocol('exam-app', (request, callback) => {
+  protocol.registerFileProtocol('exam-app', (request) => {
     const url = request.url.replace('myapp://', '')
     // Handle the URL or open specific windows based on the URL
     console.log('Received URL:', url)
