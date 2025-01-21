@@ -37,23 +37,23 @@ function createWindow(): void {
     event.preventDefault()
   })
 
-  // app.whenReady().then(() => {
-  //   globalShortcut.register('Alt+F4', () => {
-  //     if (mainWindow.isFocused()) {
-  //       console.log('Alt+F4 pressed, but prevented.')
-  //       return false
-  //     }
-  //     return true
-  //   })
+  app.whenReady().then(() => {
+    globalShortcut.register('Alt+F4', () => {
+      if (mainWindow.isFocused()) {
+        console.log('Alt+F4 pressed, but prevented.')
+        return false
+      }
+      return true
+    })
 
-  //   globalShortcut.register('Alt+Tab', () => {
-  //     if (mainWindow.isFocused()) {
-  //       console.log('Alt+Tab pressed, but prevented.')
-  //       return false
-  //     }
-  //     return true
-  //   })
-  // })
+    globalShortcut.register('Alt+Tab', () => {
+      if (mainWindow.isFocused()) {
+        console.log('Alt+Tab pressed, but prevented.')
+        return false
+      }
+      return true
+    })
+  })
 
   autoUpdater.checkForUpdatesAndNotify()
 
